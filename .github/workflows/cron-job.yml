@@ -1,0 +1,38 @@
+name: Cron Job
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # runs every day at midnight UTC
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Scrape HTML and download latest installer
+      run: |
+        URL=$(curl -L https://support.freedomscientific.com/Downloads/JAWS | grep -o 'https://jaws20.*exe')
+        curl -LJO $URL
+        mv jaws20* Installer.exe
+
+    - name: Compare with repository file
+      run: |
+        cmp Installer.exe ./Installer.exe
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -eq 0 ]; then
+          rm Installer.exe
+          echo "Installer file is already up-to-date."
+          exit 0
+        fi
+
+    - name: Move to root directory
+      run: mv Installer.exe ./
+
+    - name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: 'Update installer to latest version'
+        push: true
