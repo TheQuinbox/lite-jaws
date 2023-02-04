@@ -16,22 +16,23 @@ jobs:
       run: |
         URL=$(curl -L https://support.freedomscientific.com/Downloads/JAWS | grep -o 'https://jaws20.*exe')
         curl -LJO $URL
-        mv jaws20* Installer.exe
 
     - name: Compare with repository file
       run: |
-        cmp Installer.exe ./Installer.exe
+        cmp J20*.exe ./Installer.exe
         EXIT_CODE=$?
         if [ $EXIT_CODE -eq 0 ]; then
-          rm Installer.exe
+          rm J20*.exe
           echo "Installer file is already up-to-date."
           exit 0
         fi
 
     - name: Move to root directory
-      run: mv Installer.exe ./
+      if: ${{ success() != true }}
+      run: mv J20*.exe Installer.exe
 
     - name: Commit changes
+      if: ${{ success() != true }}
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
         commit_message: 'Update installer to latest version'
